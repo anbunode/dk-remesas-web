@@ -1,11 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { priceList, heroStats, destinationCountries } from '@/mocks/home';
+import { useExchangeRates } from '@/hooks/useExchangeRates';
+
+function formatRateTimestamp(date: Date) {
+  const minutes = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (minutes < 1) return 'hace un momento';
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  return `hace ${hours} h`;
+}
 
 export default function HeroSection() {
   const [selectedPriceIndex, setSelectedPriceIndex] = useState(4); // default $25
   const [showPriceDropdown, setShowPriceDropdown] = useState(false);
   const [selectedCountryIndex, setSelectedCountryIndex] = useState(0); // default Venezuela
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const { getRate, lastUpdated, isLive, isLoading } = useExchangeRates();
 
   const priceDropdownRef = useRef<HTMLDivElement>(null);
   const countryDropdownRef = useRef<HTMLDivElement>(null);
@@ -14,6 +24,15 @@ export default function HeroSection() {
 
   const selectedPrice = priceList[selectedPriceIndex];
   const selectedCountry = destinationCountries[selectedCountryIndex];
+  const currentRate = getRate(selectedCountry.currency, selectedCountry.fallbackRate);
+
+  const formatRateValue = (rate: number, currency: string) => {
+    const noDecimalCurrencies = ['COP', 'CLP', 'CUP', 'VES'];
+    return rate.toLocaleString('es-VE', {
+      minimumFractionDigits: noDecimalCurrencies.includes(currency) ? 0 : 2,
+      maximumFractionDigits: noDecimalCurrencies.includes(currency) ? 0 : 4,
+    });
+  };
 
   const resetTouchScrollState = () => {
     window.setTimeout(() => {
@@ -78,7 +97,7 @@ export default function HeroSection() {
 
   // Format receive amount based on country currency
   const formatReceiveAmount = () => {
-    const raw = selectedPrice.usd * selectedCountry.rate;
+    const raw = selectedPrice.usd * currentRate;
     const currency = selectedCountry.currency;
 
     const localeMap: Record<string, string> = {
@@ -273,10 +292,23 @@ export default function HeroSection() {
         </div>
 
         {/* Rate Banner */}
-        <div className="bg-accent-500 rounded-2xl px-4 py-3 mb-2 flex items-center justify-between">
-          <span className="text-foreground-950 font-semibold text-sm">
-            1 USD = {selectedCountry.rate.toLocaleString('es-VE')} {selectedCountry.currency}
-          </span>
+        <div className="bg-accent-500 rounded-2xl px-4 py-3 mb-2 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-foreground-950 font-semibold text-sm block truncate">
+              1 USD = {formatRateValue(currentRate, selectedCountry.currency)} {selectedCountry.currency}
+            </span>
+            {isLive && lastUpdated && (
+              <span className="inline-flex items-center gap-1.5 text-foreground-900/80 text-[11px] mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary-950 animate-pulse"></span>
+                Tasa en vivo · {formatRateTimestamp(lastUpdated)}
+              </span>
+            )}
+            {isLoading && !isLive && (
+              <span className="text-foreground-900/80 text-[11px] mt-0.5 block">
+                Actualizando tasa...
+              </span>
+            )}
+          </div>
           <span className="text-foreground-950 font-bold text-sm whitespace-nowrap">
             {formatReceiveAmount()}
           </span>
@@ -292,7 +324,9 @@ export default function HeroSection() {
         </a>
 
         <p className={`mt-3 text-xs text-center px-2 ${isMobile ? 'text-white/70' : 'text-foreground-600'}`}>
-          El tipo de cambio puede variar durante el día. Aplican Términos y Privacidad.
+          {isLive
+            ? 'Tipo de cambio de mercado. Puede variar al confirmar tu envío por WhatsApp.'
+            : 'El tipo de cambio puede variar durante el día. Aplican Términos y Privacidad.'}
         </p>
       </div>
     </div>
