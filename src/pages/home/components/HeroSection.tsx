@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { priceList, heroStats, destinationCountries } from '@/mocks/home';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
+import { isManualRateCurrency } from '@/config/manualRates';
 
 function formatRateTimestamp(date: Date) {
   const minutes = Math.floor((Date.now() - date.getTime()) / 60000);
@@ -25,6 +26,7 @@ export default function HeroSection() {
   const selectedPrice = priceList[selectedPriceIndex];
   const selectedCountry = destinationCountries[selectedCountryIndex];
   const currentRate = getRate(selectedCountry.currency, selectedCountry.fallbackRate);
+  const isManualRate = isManualRateCurrency(selectedCountry.currency);
 
   const formatRateValue = (rate: number, currency: string) => {
     const noDecimalCurrencies = ['COP', 'CLP', 'CUP', 'VES'];
@@ -297,13 +299,19 @@ export default function HeroSection() {
             <span className="text-foreground-950 font-semibold text-sm block truncate">
               1 USD = {formatRateValue(currentRate, selectedCountry.currency)} {selectedCountry.currency}
             </span>
-            {isLive && lastUpdated && (
+            {isManualRate && (
+              <span className="inline-flex items-center gap-1.5 text-foreground-900/80 text-[11px] mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary-950"></span>
+                Tasa DK Remesas
+              </span>
+            )}
+            {!isManualRate && isLive && lastUpdated && (
               <span className="inline-flex items-center gap-1.5 text-foreground-900/80 text-[11px] mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary-950 animate-pulse"></span>
                 Tasa en vivo · {formatRateTimestamp(lastUpdated)}
               </span>
             )}
-            {isLoading && !isLive && (
+            {!isManualRate && isLoading && !isLive && (
               <span className="text-foreground-900/80 text-[11px] mt-0.5 block">
                 Actualizando tasa...
               </span>

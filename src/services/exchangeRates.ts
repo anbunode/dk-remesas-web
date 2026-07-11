@@ -12,11 +12,13 @@ interface ExchangeRateApiResponse {
   time_next_update_unix?: number;
 }
 
+import { getManualUsdRate } from '@/config/manualRates';
+
 const API_URL = 'https://open.er-api.com/v6/latest/USD';
 const CACHE_KEY = 'dk-remesas-exchange-rates';
 const CACHE_TTL_MS = 60 * 60 * 1000;
 const RATE_MARKUP_FACTOR = 0.95;
-const RATE_ADJUSTMENT_EXCLUDED = new Set(['VES', 'USD']);
+const RATE_ADJUSTMENT_EXCLUDED = new Set(['VES', 'USD', 'CUP']);
 
 export function applyRateAdjustment(rate: number, currency: string): number {
   if (RATE_ADJUSTMENT_EXCLUDED.has(currency)) return rate;
@@ -94,6 +96,9 @@ export function getUsdRate(
   fallbackRate: number,
 ): number {
   if (currency === 'USD') return 1;
+
+  const manualRate = getManualUsdRate(currency);
+  if (manualRate !== null) return manualRate;
 
   const liveRate = rates[currency];
   const baseRate =

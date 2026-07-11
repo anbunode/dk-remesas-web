@@ -231,7 +231,7 @@ export const destinationCountries = [
   { name: 'Colombia', code: 'co', currency: 'COP', fallbackRate: 4000, flag: 'https://flagcdn.com/w80/co.png' },
   { name: 'Brasil', code: 'br', currency: 'BRL', fallbackRate: 5.5, flag: 'https://flagcdn.com/w80/br.png' },
   { name: 'Ecuador', code: 'ec', currency: 'USD', fallbackRate: 1, flag: 'https://flagcdn.com/w80/ec.png' },
-  { name: 'Cuba', code: 'cu', currency: 'CUP', fallbackRate: 24, flag: 'https://flagcdn.com/w80/cu.png' },
+  { name: 'Cuba', code: 'cu', currency: 'CUP', fallbackRate: 800, flag: 'https://flagcdn.com/w80/cu.png' },
   { name: 'Perú', code: 'pe', currency: 'PEN', fallbackRate: 3.7, flag: 'https://flagcdn.com/w80/pe.png' },
   { name: 'Chile', code: 'cl', currency: 'CLP', fallbackRate: 950, flag: 'https://flagcdn.com/w80/cl.png' },
   { name: 'Bolivia', code: 'bo', currency: 'BOB', fallbackRate: 6.9, flag: 'https://flagcdn.com/w80/bo.png' },
