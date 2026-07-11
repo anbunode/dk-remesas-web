@@ -15,6 +15,13 @@ interface ExchangeRateApiResponse {
 const API_URL = 'https://open.er-api.com/v6/latest/USD';
 const CACHE_KEY = 'dk-remesas-exchange-rates';
 const CACHE_TTL_MS = 60 * 60 * 1000;
+const RATE_MARKUP_FACTOR = 0.95;
+const RATE_ADJUSTMENT_EXCLUDED = new Set(['VES', 'USD']);
+
+export function applyRateAdjustment(rate: number, currency: string): number {
+  if (RATE_ADJUSTMENT_EXCLUDED.has(currency)) return rate;
+  return rate * RATE_MARKUP_FACTOR;
+}
 
 interface CachedRates {
   rates: Record<string, number>;
@@ -87,6 +94,10 @@ export function getUsdRate(
   fallbackRate: number,
 ): number {
   if (currency === 'USD') return 1;
+
   const liveRate = rates[currency];
-  return typeof liveRate === 'number' && liveRate > 0 ? liveRate : fallbackRate;
+  const baseRate =
+    typeof liveRate === 'number' && liveRate > 0 ? liveRate : fallbackRate;
+
+  return applyRateAdjustment(baseRate, currency);
 }
