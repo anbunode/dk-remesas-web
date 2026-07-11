@@ -9,9 +9,46 @@ export default function HeroSection() {
 
   const priceDropdownRef = useRef<HTMLDivElement>(null);
   const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isScrollingRef = useRef(false);
 
   const selectedPrice = priceList[selectedPriceIndex];
   const selectedCountry = destinationCountries[selectedCountryIndex];
+
+  const resetTouchScrollState = () => {
+    window.setTimeout(() => {
+      isScrollingRef.current = false;
+      touchStartRef.current = null;
+    }, 80);
+  };
+
+  const dropdownScrollProps = {
+    onTouchStart: (e: React.TouchEvent) => {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      };
+      isScrollingRef.current = false;
+    },
+    onTouchMove: (e: React.TouchEvent) => {
+      if (!touchStartRef.current) return;
+      const dx = Math.abs(e.touches[0].clientX - touchStartRef.current.x);
+      const dy = Math.abs(e.touches[0].clientY - touchStartRef.current.y);
+      if (dx > 8 || dy > 8) {
+        isScrollingRef.current = true;
+      }
+    },
+    onTouchEnd: resetTouchScrollState,
+    onTouchCancel: resetTouchScrollState,
+    onClick: (e: React.MouseEvent) => {
+      e.stopPropagation();
+    },
+  };
+
+  const handleDropdownSelect = (selectFn: () => void) => {
+    if (isScrollingRef.current) return;
+    selectFn();
+  };
 
   const selectPrice = (index: number) => {
     setSelectedPriceIndex(index);
@@ -23,9 +60,10 @@ export default function HeroSection() {
     setShowCountryDropdown(false);
   };
 
-  // Use "click" (not "mousedown") so mobile taps register before the menu closes
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
+      if (isScrollingRef.current) return;
+
       const target = e.target as Node;
       if (priceDropdownRef.current && !priceDropdownRef.current.contains(target)) {
         setShowPriceDropdown(false);
@@ -129,15 +167,15 @@ export default function HeroSection() {
           </button>
 
           {showCountryDropdown && (
-            <div className="absolute left-0 right-0 top-full mt-1 bg-background-50 border border-background-200 rounded-2xl shadow-lg z-50 overflow-hidden max-h-64 overflow-y-auto overscroll-contain">
+            <div
+              className="absolute left-0 right-0 top-full mt-1 bg-background-50 border border-background-200 rounded-2xl shadow-lg z-50 max-h-64 overflow-y-auto overscroll-contain touch-pan-y dropdown-scroll"
+              {...dropdownScrollProps}
+            >
               {destinationCountries.map((country, i) => (
                 <button
                   key={country.code}
                   type="button"
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    selectCountry(i);
-                  }}
+                  onClick={() => handleDropdownSelect(() => selectCountry(i))}
                   className={`w-full flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer touch-manipulation ${selectedCountryIndex === i ? 'bg-accent-100' : 'hover:bg-background-100 active:bg-background-200'}`}
                 >
                   <span className="w-6 h-6 rounded-full overflow-hidden border border-background-300/50 flex-shrink-0">
@@ -188,15 +226,15 @@ export default function HeroSection() {
           </button>
 
           {showPriceDropdown && (
-            <div className="absolute left-0 right-0 top-full mt-1 bg-background-50 border border-background-200 rounded-2xl shadow-lg z-50 overflow-hidden max-h-72 overflow-y-auto overscroll-contain">
+            <div
+              className="absolute left-0 right-0 top-full mt-1 bg-background-50 border border-background-200 rounded-2xl shadow-lg z-50 max-h-72 overflow-y-auto overscroll-contain touch-pan-y dropdown-scroll"
+              {...dropdownScrollProps}
+            >
               {priceList.map((item, i) => (
                 <button
                   key={item.usd}
                   type="button"
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    selectPrice(i);
-                  }}
+                  onClick={() => handleDropdownSelect(() => selectPrice(i))}
                   className={`w-full flex items-center justify-between px-4 py-3 transition-colors cursor-pointer touch-manipulation ${selectedPriceIndex === i ? 'bg-accent-100' : 'hover:bg-background-100 active:bg-background-200'}`}
                 >
                   <span className="text-foreground-950 font-bold text-lg font-heading">
