@@ -13,18 +13,29 @@ export default function HeroSection() {
   const selectedPrice = priceList[selectedPriceIndex];
   const selectedCountry = destinationCountries[selectedCountryIndex];
 
-  // Close dropdowns on outside click
+  const selectPrice = (index: number) => {
+    setSelectedPriceIndex(index);
+    setShowPriceDropdown(false);
+  };
+
+  const selectCountry = (index: number) => {
+    setSelectedCountryIndex(index);
+    setShowCountryDropdown(false);
+  };
+
+  // Use "click" (not "mousedown") so mobile taps register before the menu closes
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (priceDropdownRef.current && !priceDropdownRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (priceDropdownRef.current && !priceDropdownRef.current.contains(target)) {
         setShowPriceDropdown(false);
       }
-      if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target as Node)) {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(target)) {
         setShowCountryDropdown(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   // Format receive amount based on country currency
@@ -97,11 +108,12 @@ export default function HeroSection() {
           <label className={`text-xs font-medium ${isMobile ? 'text-white/80' : 'text-foreground-600'}`}>Destino</label>
           <button
             type="button"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setShowCountryDropdown(!showCountryDropdown);
               setShowPriceDropdown(false);
             }}
-            className="w-full mt-1 flex items-center gap-3 cursor-pointer"
+            className="w-full mt-1 flex items-center gap-3 cursor-pointer touch-manipulation"
           >
             <span className="w-7 h-7 rounded-full overflow-hidden border border-background-300/50 flex-shrink-0">
               <img
@@ -117,16 +129,16 @@ export default function HeroSection() {
           </button>
 
           {showCountryDropdown && (
-            <div className="absolute left-0 right-0 top-full mt-1 bg-background-50 border border-background-200 rounded-2xl shadow-lg z-30 overflow-hidden max-h-64 overflow-y-auto">
+            <div className="absolute left-0 right-0 top-full mt-1 bg-background-50 border border-background-200 rounded-2xl shadow-lg z-50 overflow-hidden max-h-64 overflow-y-auto overscroll-contain">
               {destinationCountries.map((country, i) => (
                 <button
                   key={country.code}
                   type="button"
-                  onClick={() => {
-                    setSelectedCountryIndex(i);
-                    setShowCountryDropdown(false);
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    selectCountry(i);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer ${selectedCountryIndex === i ? 'bg-accent-100' : 'hover:bg-background-100'}`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer touch-manipulation ${selectedCountryIndex === i ? 'bg-accent-100' : 'hover:bg-background-100 active:bg-background-200'}`}
                 >
                   <span className="w-6 h-6 rounded-full overflow-hidden border border-background-300/50 flex-shrink-0">
                     <img
@@ -150,11 +162,12 @@ export default function HeroSection() {
           </label>
           <button
             type="button"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setShowPriceDropdown(!showPriceDropdown);
               setShowCountryDropdown(false);
             }}
-            className="w-full mt-1 flex items-center justify-between cursor-pointer"
+            className="w-full mt-1 flex items-center justify-between cursor-pointer touch-manipulation"
           >
             <span className={`text-3xl font-bold font-heading ${isMobile ? 'text-white' : 'text-foreground-950'}`}>
               {formatNumber(selectedPrice.gyd)}
@@ -175,16 +188,16 @@ export default function HeroSection() {
           </button>
 
           {showPriceDropdown && (
-            <div className="absolute left-0 right-0 top-full mt-1 bg-background-50 border border-background-200 rounded-2xl shadow-lg z-20 overflow-hidden max-h-72 overflow-y-auto">
+            <div className="absolute left-0 right-0 top-full mt-1 bg-background-50 border border-background-200 rounded-2xl shadow-lg z-50 overflow-hidden max-h-72 overflow-y-auto overscroll-contain">
               {priceList.map((item, i) => (
                 <button
                   key={item.usd}
                   type="button"
-                  onClick={() => {
-                    setSelectedPriceIndex(i);
-                    setShowPriceDropdown(false);
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    selectPrice(i);
                   }}
-                  className={`w-full flex items-center justify-between px-4 py-3 transition-colors cursor-pointer ${selectedPriceIndex === i ? 'bg-accent-100' : 'hover:bg-background-100'}`}
+                  className={`w-full flex items-center justify-between px-4 py-3 transition-colors cursor-pointer touch-manipulation ${selectedPriceIndex === i ? 'bg-accent-100' : 'hover:bg-background-100 active:bg-background-200'}`}
                 >
                   <span className="text-foreground-950 font-bold text-lg font-heading">
                     {formatNumber(item.gyd)} GYD
@@ -318,7 +331,7 @@ export default function HeroSection() {
 
         {/* Stats + Calculator */}
         <div className="px-4 pb-16 max-w-7xl mx-auto">
-          <div className="rounded-[2rem] overflow-hidden">
+          <div className="rounded-[2rem]">
           {renderStats()}
           {renderCalculator(true)}
           </div>
